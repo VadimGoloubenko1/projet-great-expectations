@@ -1,14 +1,12 @@
 """
-Python files
-"""
-__pycache__/
-.pytest_cache
-**/__pycache__
-
-"""
 IDE files
 """
 .vscode/
+
+"""
+env files
+"""
+.env
 
 """
 Airflow files
@@ -22,6 +20,13 @@ logs/
 Great Expectations files
 """
 great_expectations/
+
+"""
+Python files
+"""
+__pycache__/
+.pytest_cache
+**/__pycache__
 
 """
 Java files
