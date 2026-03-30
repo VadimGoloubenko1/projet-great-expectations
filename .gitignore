@@ -1,0 +1,9 @@
+__pycache__/
+.pytest_cache
+**/__pycache__
+.vscode/
+airflow.cfg
+unittests.cfg
+airflow.db
+logs/
+great_expectations/
