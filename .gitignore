@@ -1,9 +1,42 @@
+"""
+Python files
+"""
 __pycache__/
 .pytest_cache
 **/__pycache__
+
+"""
+IDE files
+"""
 .vscode/
+
+"""
+Airflow files
+"""
 airflow.cfg
 unittests.cfg
 airflow.db
 logs/
+
+"""
+Great Expectations files
+"""
 great_expectations/
+
+"""
+Java files
+"""
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
