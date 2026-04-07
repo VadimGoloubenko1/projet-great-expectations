@@ -30,7 +30,7 @@ run_java_task = BashOperator(
 )
 
 def run_gx_with_full_docs():
-    context = gx.get_context(mode="ephemeral")
+    context = gx.get_context()
 
     """
     Partie 1 : Validation des données de logs
@@ -42,7 +42,7 @@ def run_gx_with_full_docs():
     # 2. Création de la suite de validation
     suite = context.suites.add(gx.ExpectationSuite(name="logs_suite"))
 
-    # 3. Préparation de la validation (Suite et Attentes)
+    # 3. Préparation de la validation (suite et attentes)
     suite.add_expectation(gxe.ExpectColumnValuesToMatchRegex(column="ip", regex=r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"))
     suite.add_expectation(gxe.ExpectColumnValuesToBeOfType(column="status", type_="int"))
     suite.add_expectation(gxe.ExpectColumnValuesToBeBetween(column="status", min_value=100, max_value=599))
@@ -54,9 +54,9 @@ def run_gx_with_full_docs():
     asset = ds.add_dataframe_asset(name="java_asset")
     batch_def = asset.add_batch_definition_whole_dataframe(name="batch_def")
 
-    # 5. Création de la Validation Definition
-    # C'est cet objet qui fait le lien entre vos données et vos tests
-    val_def_logs = context.validation_definitions.add(
+    # 5. Création de la validation definition
+    # C'est cet objet qui fait le lien entre données et tests
+    val_def_logs = context.validation_definitions.add_or_update(
         gx.ValidationDefinition(
             name="log_validation",
             data=batch_def,
@@ -72,44 +72,42 @@ def run_gx_with_full_docs():
 
     suite_stats = context.suites.add(gx.ExpectationSuite(name="stats_suite"))
 
-    # Règle 1 : Vérifier que la taille moyenne (average) est entre 500 et 5000
+    # Règle 1 : vérifier que la taille moyenne (average) est entre 500 et 5000
     suite_stats.add_expectation(gxe.ExpectColumnValuesToBeBetween(
         column="average", min_value=500, max_value=5000
     ))
-    # Règle 2 : S'assurer que la somme totale (sum) n'est pas nulle
+    # Règle 2 : s'assurer que la somme totale (sum) n'est pas nulle
     suite_stats.add_expectation(gxe.ExpectColumnValuesToBeBetween(column="sum", min_value=0))
 
     ds_stats = context.data_sources.add_pandas(name="ds_stats")
     asset_stats = ds_stats.add_dataframe_asset(name="asset_stats")
     batch_stats = asset_stats.add_batch_definition_whole_dataframe(name="batch_stats")
 
-    val_def_stats = context.validation_definitions.add(
+    val_def_stats = context.validation_definitions.add_or_update(
         gx.ValidationDefinition(name="stats_validation", data=batch_stats, suite=suite_stats)
     )
 
 
-    checkpoint = context.checkpoints.add_or_update(
+    checkpoint_logs = context.checkpoints.add_or_update(
         gx.Checkpoint(
-            name="full_validation_checkpoint",
-            validation_definitions=[val_def_logs, val_def_stats],
+            name="logs_checkpoint",
+            validation_definitions=[val_def_logs],
             actions=[gx.checkpoint.actions.UpdateDataDocsAction(name="update_data_docs_action")],
         )
     )
 
-    checkpoint.run(batch_parameters={"dataframe": df_logs, "dataframe": df_stats})
-    index_page_url = context.build_data_docs().get("local_site")
+    checkpoint_stats = context.checkpoints.add_or_update(
+        gx.Checkpoint(
+            name="stats_checkpoint",
+            validation_definitions=[val_def_stats],
+            actions=[gx.checkpoint.actions.UpdateDataDocsAction(name="update_data_docs_action")],
+        )
+    )
 
-    """
-    # Exécution des deux validations
-    val_def_logs.run(batch_parameters={"dataframe": df_logs})
-    val_def_stats.run(batch_parameters={"dataframe": df_stats})
+    checkpoint_logs.run(batch_parameters={"dataframe": df_logs})
+    checkpoint_stats.run(batch_parameters={"dataframe": df_stats})
 
-    # Génération des Data Docs (template HTML de Great Expectations)
-    # build_data_docs() renvoie un dictionnaire contenant l'URL locale du rapport
     index_page_url = context.build_data_docs().get("local_site")
-    # On extrait le chemin du dossier racine des docs générées (en enlevant 'file://')
-    temp_docs_path = index_page_url.replace("file://", "").replace("index.html", "")
-    """
 
     # Transfert vers le volume Docker
     temp_docs_path = index_page_url.replace("file://", "").replace("index.html", "")
