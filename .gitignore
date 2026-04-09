@@ -4,11 +4,6 @@ IDE files
 .vscode/
 
 """
-env files
-"""
-.env
-
-"""
 Airflow files
 """
 airflow.cfg
